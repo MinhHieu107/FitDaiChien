@@ -1,0 +1,20 @@
+# Stage 1 - Week 1: Just a Little Cough
+name=Week 1: Just a Little Cough
+activeRows=1,2,3,4,5
+startCredits=150
+cards=PC,YEAR1,GAMER,YEAR2
+newCards=GAMER,YEAR2
+tip=0,6,Gamer soaks up bites. Put him in front of your shooters.
+spawn=20,SICK,3
+spawn=32,SICK,2
+spawn=44,SICK,4
+spawn=70,SICK,1
+spawn=74,SICK,5
+spawn=78,TISSUE,3
+spawn=90,SICK,2
+spawn=94,SICK,4
+spawn=120,SICK,3
+spawn=120,SICK,2
+spawn=124,TISSUE,4
+spawn=128,SICK,1
+spawn=128,TISSUE,5

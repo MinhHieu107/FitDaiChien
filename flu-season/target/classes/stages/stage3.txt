@@ -1,0 +1,24 @@
+# Stage 3 - Finals: The Professor Arrives
+name=Finals: The Professor Arrives
+activeRows=1,2,3,4,5
+startCredits=250
+cards=PC,YEAR1,YEAR2,YEAR3,YEAR4,GAMER,WEABOO,CHARGER
+newCards=YEAR4
+tip=0,6,Year 4 deals double damage to the professor.
+banner=100,Today's lecture is a surprise.
+spawn=10,SICK,1
+spawn=18,SICK,2
+spawn=26,SICK,4
+spawn=34,TISSUE,5
+spawn=42,BLANKET,3
+spawn=60,SICK,2
+spawn=60,SICK,4
+spawn=68,TISSUE,1
+spawn=68,TISSUE,5
+spawn=76,BLANKET,2
+spawn=76,BLANKET,4
+boss=100,PROF,3
+spawn=105,TISSUE,1
+spawn=115,TISSUE,5
+spawn=125,SICK,2
+spawn=125,SICK,4

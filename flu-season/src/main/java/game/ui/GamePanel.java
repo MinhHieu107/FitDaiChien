@@ -3,6 +3,7 @@ package game.ui;
 import game.core.*;
 import game.core.RenderSnapshot.*;
 import game.entity.UnitType;
+import game.stage.Stages;
 import javax.swing.*;
 import java.awt.*;
 
@@ -24,15 +25,23 @@ public class GamePanel extends JPanel {
 
         g.setColor(BG);
         g.fillRect(0, 0, getWidth(), getHeight());
-        drawTopBar(g, s);
-        drawGrid(g, s);
-        drawHover(g, s);
-        drawDefenders(g, s);
-        drawEnemies(g, s);
-        drawProjectiles(g, s);
-        drawTokens(g, s);
-        drawBottomBar(g, s);
-        drawOverlay(g, s);
+
+        switch (s.state()) {
+            case MENU -> drawMenu(g, s);
+            case STAGE_SELECT -> drawStageSelect(g, s);
+            default -> {                                  // PLAYING, PAUSED, WON, LOST, ENDING
+                drawTopBar(g, s);
+                drawGrid(g, s);
+                drawHover(g, s);
+                drawDefenders(g, s);
+                drawEnemies(g, s);
+                drawProjectiles(g, s);
+                drawTokens(g, s);
+                drawBottomBar(g, s);
+                drawBanner(g, s);
+                drawOverlay(g, s);
+            }
+        }
     }
 
     // ---------------- Top bar ----------------
@@ -64,6 +73,8 @@ public class GamePanel extends JPanel {
         g.setColor(Color.WHITE);
         g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 20));
         g.drawString(String.valueOf(s.credits()), Constants.CREDITS_X + 48, Constants.CREDITS_Y + 28);
+
+        drawButton(g, s, Layout.PAUSE_BTN, "Pause", s.state() == GameState.PLAYING);
     }
 
     // ---------------- Luoi ----------------
@@ -101,6 +112,8 @@ public class GamePanel extends JPanel {
             } else if (isStudent(t) && d.actionAge() < 12) {               // dang ban: wind-up -> return
                 Assets.drawFrame(g, Assets.get("student_throw_actions_atlas.png"),
                         d.actionAge() / 3, yearRow(t), 160, 192, x, y, w, h);
+            } else if (t == UnitType.GAMER && d.health() * 2 < t.health) {   // duoi 50% mau: sprite "tired"
+                g.drawImage(Assets.get("gamer_tired.png"), x, y, w, h, null);
             } else {
                 g.drawImage(Assets.get("placed/" + t.sprite + ".png"), x, y, w, h, null);
             }
@@ -167,19 +180,99 @@ public class GamePanel extends JPanel {
         g.fillRect(90, 570, (int) (720 * s.waveProgress()), 8);
     }
 
+    private void drawBanner(Graphics2D g, RenderSnapshot s) {
+        if (s.bannerAlpha() <= 0 || s.state() != GameState.PLAYING) return;
+        int a = (int) (255 * s.bannerAlpha());
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 34));
+        int w = g.getFontMetrics().stringWidth(s.banner());
+        int x = (Constants.WIN_W - w) / 2, y = 300;
+        g.setColor(new Color(0, 0, 0, a * 2 / 3));
+        g.drawString(s.banner(), x + 2, y + 2);
+        g.setColor(new Color(255, 255, 255, a));
+        g.drawString(s.banner(), x, y);
+    }
+
     private void drawOverlay(Graphics2D g, RenderSnapshot s) {
-        String title, sub;
-        switch (s.state()) {
-            case PAUSED -> { title = "PAUSED"; sub = "Press P to resume"; }
-            case WON    -> { title = "Stage cleared!"; sub = s.message() + "   (click to restart)"; }
-            case LOST   -> { title = "Marked absent"; sub = s.message() + "   (click to retry)"; }
-            default -> { return; }
-        }
-        g.setColor(new Color(0, 0, 0, 150));
+        if (s.state() == GameState.PLAYING) return;
+        g.setColor(new Color(0, 0, 0, 160));
         g.fillRect(0, 0, Constants.WIN_W, Constants.WIN_H);
         g.setColor(Color.WHITE);
-        drawCentered(g, title, 270, new Font(Font.SANS_SERIF, Font.BOLD, 44));
-        drawCentered(g, sub, 320, new Font(Font.SANS_SERIF, Font.PLAIN, 18));
+        switch (s.state()) {
+            case PAUSED -> {
+                drawCentered(g, "PAUSED", 250, new Font(Font.SANS_SERIF, Font.BOLD, 44));
+                drawButton(g, s, Layout.PRIMARY, "Resume", true);
+                drawButton(g, s, Layout.SECONDARY, "Restart stage", true);
+                drawButton(g, s, Layout.TERTIARY, "Back to menu", true);
+            }
+            case WON -> {
+                drawCentered(g, "Stage cleared!", 230, new Font(Font.SANS_SERIF, Font.BOLD, 44));
+                drawCentered(g, s.message(), 280, new Font(Font.SANS_SERIF, Font.PLAIN, 18));
+                drawButton(g, s, Layout.PRIMARY, "Next stage", true);
+                drawButton(g, s, Layout.SECONDARY, "Back to menu", true);
+            }
+            case LOST -> {
+                drawCentered(g, "Marked absent", 230, new Font(Font.SANS_SERIF, Font.BOLD, 44));
+                drawCentered(g, s.message(), 280, new Font(Font.SANS_SERIF, Font.PLAIN, 18));
+                drawButton(g, s, Layout.PRIMARY, "Retry", true);
+                drawButton(g, s, Layout.SECONDARY, "Back to menu", true);
+            }
+            case ENDING -> {
+                drawCentered(g, "COURSE PASSED", 230, new Font(Font.SANS_SERIF, Font.BOLD, 48));
+                drawCentered(g, "...Fine. Everyone gets a B. Class dismissed.", 280, new Font(Font.SANS_SERIF, Font.PLAIN, 18));
+                drawCentered(g, s.message(), 306, new Font(Font.SANS_SERIF, Font.PLAIN, 16));
+                drawButton(g, s, Layout.PRIMARY, "Back to menu", true);
+            }
+            default -> { }
+        }
+    }
+
+    // ---------------- Menu & chon stage ----------------
+
+    private void drawMenu(Graphics2D g, RenderSnapshot s) {
+        g.setColor(Color.WHITE);
+        drawCentered(g, "Flu Season Defense", 130, new Font(Font.SANS_SERIF, Font.BOLD, 54));
+
+        // vai nhan vat trang tri
+        g.drawImage(Assets.get("placed/year1_student_placed.png"), 250, 150, 128, 144, null);
+        g.drawImage(Assets.get("sick_student.png"), 522, 150, 128, 144, null);
+
+        g.setColor(new Color(200, 205, 215));
+        Font f = new Font(Font.SANS_SERIF, Font.ITALIC, 15);
+        drawCentered(g, "Flu season hit campus. Midterms hit harder.", 296 + 18, f);
+        drawCentered(g, "Your classmates are turning purple. Hold the lecture hall.", 296 + 38, f);
+
+        drawButton(g, s, Layout.MENU_PLAY, "Play", true);
+        drawButton(g, s, Layout.MENU_QUIT, "Quit", true);
+
+        if (!s.error().isEmpty()) {                        // loi doc stage: hien o day thay vi crash
+            g.setColor(new Color(255, 120, 110));
+            drawCentered(g, "Could not load stage:", 500, new Font(Font.SANS_SERIF, Font.BOLD, 15));
+            drawCentered(g, s.error(), 524, new Font(Font.SANS_SERIF, Font.PLAIN, 14));
+        }
+    }
+
+    private void drawStageSelect(Graphics2D g, RenderSnapshot s) {
+        g.setColor(Color.WHITE);
+        drawCentered(g, "Select stage", 100, new Font(Font.SANS_SERIF, Font.BOLD, 40));
+        for (int i = 0; i < Stages.TITLES.length; i++) {
+            boolean open = i <= s.unlocked();
+            drawButton(g, s, Layout.stageButton(i), (i == 0 ? "Tutorial - " : "Stage " + i + " - ") + Stages.TITLES[i], open);
+        }
+        drawButton(g, s, Layout.SELECT_BACK, "Back", true);
+    }
+
+    // ---------------- Tien ich ve ----------------
+
+    private void drawButton(Graphics2D g, RenderSnapshot s, Layout.Rect r, String label, boolean enabled) {
+        boolean hover = enabled && r.contains(s.mouseX(), s.mouseY());
+        g.setColor(!enabled ? new Color(70, 72, 78) : hover ? new Color(110, 150, 120) : new Color(70, 110, 85));
+        g.fillRoundRect(r.x(), r.y(), r.w(), r.h(), 14, 14);
+        g.setColor(enabled ? new Color(200, 230, 205) : new Color(100, 102, 108));
+        g.drawRoundRect(r.x(), r.y(), r.w(), r.h(), 14, 14);
+        g.setColor(enabled ? Color.WHITE : new Color(130, 132, 138));
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
+        FontMetrics fm = g.getFontMetrics();
+        g.drawString(label, r.x() + (r.w() - fm.stringWidth(label)) / 2, r.y() + (r.h() + fm.getAscent() - fm.getDescent()) / 2);
     }
 
     private void drawCentered(Graphics2D g, String text, int baselineY, Font font) {
