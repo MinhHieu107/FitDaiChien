@@ -29,9 +29,9 @@ public class GameLoop {
     private void tick() {
         try {
             Command c;
-            while ((c = queue.poll()) != null) c.apply(model);   // bước 1 của tick
+            while ((c = queue.poll()) != null) c.apply(model);
             model.update();
-            publisher.accept(model.snapshot());                   // bước 10 của tick
-        } catch (Throwable t) { t.printStackTrace(); }  // nếu không bắt, scheduler sẽ im lặng dừng hẳn
+            publisher.accept(model.snapshot());
+        } catch (Throwable t) { t.printStackTrace(); }
     }
 }
