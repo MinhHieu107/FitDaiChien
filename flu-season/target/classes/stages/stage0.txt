@@ -1,0 +1,11 @@
+# Stage 0 - Orientation Day (tutorial)
+# Voi tutorial=true, thoi gian spawn tinh tu luc bat dau buoc 4 cua tutorial.
+name=Orientation Day
+activeRows=2,3,4
+startCredits=150
+cards=PC,YEAR1
+newCards=PC,YEAR1
+tutorial=true
+spawn=0,SICK,3
+spawn=12,SICK,3
+spawn=24,SICK,2

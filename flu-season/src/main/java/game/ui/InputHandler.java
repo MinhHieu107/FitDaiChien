@@ -10,12 +10,11 @@ public class InputHandler extends MouseAdapter {
 
     @Override public void mouseMoved(MouseEvent e)   { hover(e); }
     @Override public void mouseDragged(MouseEvent e) { hover(e); }
-    @Override public void mouseExited(MouseEvent e)  { loop.submit(m -> m.setHover(-1, -1)); }
+    @Override public void mouseExited(MouseEvent e)  { loop.submit(m -> m.setMouse(-1, -1)); }
 
     private void hover(MouseEvent e) {
-        int[] t = GameModel.tileAt(e.getX(), e.getY());
-        int r = t == null ? -1 : t[0], c = t == null ? -1 : t[1];
-        loop.submit(m -> m.setHover(r, c));
+        int x = e.getX(), y = e.getY();
+        loop.submit(m -> m.setMouse(x, y));
     }
 
     @Override public void mousePressed(MouseEvent e) {
