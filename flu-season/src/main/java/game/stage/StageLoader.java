@@ -77,6 +77,8 @@ public final class StageLoader {
                     catch (IllegalArgumentException e) {
                         throw new StageLoadException(where + ": unknown enemy type '" + p[1].strip() + "'");
                     }
+                    if (type == EnemyType.PROF)
+                        throw new StageLoadException(where + ": the boss must be declared with boss=, not spawn=");
                     spawns.add(new SpawnEvent(sec(p[0], where), type, row1(p[2], where)));
                 }
                 case "boss" -> {
