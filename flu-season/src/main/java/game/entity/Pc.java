@@ -10,8 +10,9 @@ public class Pc extends Defender {
 
     public Pc(int row, int col) { super(UnitType.PC, row, col); }
 
-    @Override public void update(GameModel model) {
+    @Override protected void update(GameModel model) {
         if (actionAge < 1000) actionAge++;
+        if (model.pcProductionPaused()) return;        // Attendance Check: dung san xuat (token da ra van nhat duoc)
         timer++;
         int target = first ? Constants.PC_FIRST_TICKS : Constants.PC_INTERVAL_TICKS;
         if (timer >= target && model.tokenCount(this) < Constants.MAX_TOKENS_PER_PC) {

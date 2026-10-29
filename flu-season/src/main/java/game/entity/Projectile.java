@@ -20,10 +20,13 @@ public class Projectile {
     private final Kind kind;
     private final int row;
     private final double damage;
+    private final double bossDamage;                  // Year 4: gap doi khi trung boss
     private double px;
 
-    public Projectile(Kind kind, int row, double px, double damage) {
-        this.kind = kind; this.row = row; this.px = px; this.damage = damage;
+    public Projectile(Kind kind, int row, double px, double damage) { this(kind, row, px, damage, damage); }
+
+    public Projectile(Kind kind, int row, double px, double damage, double bossDamage) {
+        this.kind = kind; this.row = row; this.px = px; this.damage = damage; this.bossDamage = bossDamage;
     }
 
     public void update() { px += kind.dir * kind.speed / Constants.TPS; }
@@ -36,4 +39,5 @@ public class Projectile {
     public int row() { return row; }
     public double px() { return px; }
     public double damage() { return damage; }
+    public double bossDamage() { return bossDamage; }
 }
