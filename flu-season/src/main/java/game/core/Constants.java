@@ -25,5 +25,6 @@ public final class Constants {
     public static final double ENEMY_SPAWN_X = 9.6;   // don vi: o (tile)
     public static final int BALL_GAP_TICKS = 3;       // khoang cach giua cac vien trong 1 loat
 
+
     private Constants() {}
 }

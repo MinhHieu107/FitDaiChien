@@ -1,5 +1,7 @@
 package game.core;
 
+import game.entity.BossAction;
+import game.entity.Effect;
 import game.entity.EnemyType;
 import game.entity.Projectile;
 import game.entity.UnitType;
@@ -11,19 +13,27 @@ public record RenderSnapshot(
         int hoverRow, int hoverCol, boolean hoverValid,
         int credits, UnitType selected, String message, double waveProgress,
         String banner, double bannerAlpha, String error, int unlocked,
+        String bossLabel, double bossHealth,
         List<Boolean> activeRows,
         List<CardView> cards, List<DefenderView> defenders, List<EnemyView> enemies,
-        List<ProjectileView> projectiles, List<TokenView> tokens) {
+        List<ProjectileView> projectiles, List<TokenView> tokens,
+        List<FloatView> floats, List<EffectView> effects) {
 
     public record CardView(UnitType type, int cooldownLeft, boolean affordable) {}
-    public record DefenderView(UnitType type, int row, int col, int health, int actionAge) {}
-    public record EnemyView(EnemyType type, int row, double x, int health, boolean biting, int age) {}
+    public record DefenderView(UnitType type, int row, int col, int health, int actionAge,
+                               int visualRow, int visualFrame, boolean stunned) {}
+    public record EnemyView(EnemyType type, int row, double x, int health, boolean biting, int age,
+                            boolean flash, double alpha,
+                            boolean boss, int phase, BossAction action, int actionAge) {}
     public record ProjectileView(Projectile.Kind kind, int row, double px) {}
     public record TokenView(int x, int y, int ticksLeft) {}
+    /** Chu bay len roi mo dan: (x, y) la toa do pixel da tinh san vi tri hien tai. */
+    public record FloatView(String text, int x, int y, double alpha) {}
+    public record EffectView(Effect.Kind kind, int row, int col, int age, int total) {}
 
     public static RenderSnapshot empty() {
         return new RenderSnapshot(GameState.MENU, 0, -1, -1, -1, -1, false, 0, null, "", 0,
-                "", 0, "", 0, List.of(true, true, true, true, true),
-                List.of(), List.of(), List.of(), List.of(), List.of());
+                "", 0, "", 0, "", 0, List.of(true, true, true, true, true),
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
     }
 }
