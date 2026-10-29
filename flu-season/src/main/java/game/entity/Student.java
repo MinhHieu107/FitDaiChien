@@ -7,6 +7,7 @@ import game.core.GameModel;
 public class Student extends Defender {
     private final int ballsPerShot;
     private final int intervalTicks;
+
     private int timer;                 // dem len lien tuc, dung o intervalTicks khi chua co muc tieu
     private int ballsLeft = 0;         // so vien con phai ban trong loat hien tai
     private int ballCooldown = 0;
@@ -24,7 +25,7 @@ public class Student extends Defender {
         this.timer = intervalTicks;    // san sang ban ngay khi co muc tieu
     }
 
-    @Override public void update(GameModel model) {
+    @Override protected void update(GameModel model) {
         if (sinceShot < 1000) sinceShot++;
         timer = Math.min(timer + 1, intervalTicks);
 
@@ -45,7 +46,9 @@ public class Student extends Defender {
     }
 
     private void spawnBall(GameModel model) {
-        model.addProjectile(new Projectile(Projectile.Kind.PAPER, row(), col() + 0.8, 20));
+        // Year 4 gay gap doi sat thuong len boss (40 thay vi 20)
+        double vsBoss = type() == UnitType.YEAR4 ? 40 : 20;
+        model.addProjectile(new Projectile(Projectile.Kind.PAPER, row(), col() + 0.8, 20, vsBoss));
     }
 
     @Override public int actionAge() { return sinceShot; }
