@@ -2,7 +2,7 @@ package game.entity;
 
 import game.core.GameModel;
 
-/** Prof. Deadline. Hitbox [x, x+1.0], 9000 mau, phase theo mau, cac don danh theo timer. */
+/** Prof. Deadline. Hitbox [x, x+1.0], 12000 mau, phase theo mau, cac don danh theo timer. */
 public class Boss extends Enemy {
     public static final double WIDTH = 1.0;
     public static final double SPAWN_X = 9.8;

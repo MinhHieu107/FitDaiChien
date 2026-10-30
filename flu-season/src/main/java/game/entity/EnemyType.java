@@ -6,7 +6,7 @@ public enum EnemyType {
     TISSUE (120, 0.45, 20, "animation_sheets/walk_sick_student_tissue.png",  1, "*sniff* Wait for me!"),
     BLANKET(500, 0.18, 20, "animation_sheets/walk_sick_student_blanket.png", 2, "Five more minutes..."),
     /** Boss. Khong duoc dung trong dong spawn= cua file stage (dung dong boss=). */
-    PROF   (9000, 0.10, 150, "animation_sheets/walk_prof_deadline.png",      0, "Today's lecture is a surprise.");
+    PROF   (36000, 0.10, 170, "animation_sheets/walk_prof_deadline.png",      0, "Today's lecture is a surprise.");
 
     public final int health;
     public final double speed;
