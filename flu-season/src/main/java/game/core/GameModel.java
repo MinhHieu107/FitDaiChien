@@ -60,6 +60,7 @@ public class GameModel {
     private List<UnitType> cards = List.of();
     private final Map<UnitType, Integer> cooldown = new EnumMap<>(UnitType.class);
     private UnitType selected;
+    private boolean digging;                       // che do con gian: bam quan de go bo
 
     private final Defender[][] grid = new Defender[Constants.ROWS][Constants.COLS];
     private boolean[] activeRows = new boolean[Constants.ROWS];
@@ -120,7 +121,7 @@ public class GameModel {
         tick = 0;
         credits = config.startCredits();
         for (UnitType t : UnitType.values()) cooldown.put(t, 0);
-        selected = null;
+        selected = null; digging = false;
         for (Defender[] r : grid) Arrays.fill(r, null);
         tokens.clear(); enemies.clear(); pendingEnemies.clear(); projectiles.clear();
         floats.clear(); effects.clear(); seenTypes.clear();
@@ -149,7 +150,7 @@ public class GameModel {
         hoverCol = t == null ? -1 : t[1];
     }
 
-    public void cancelSelection() { selected = null; }
+    public void cancelSelection() { selected = null; digging = false; }
 
     public void handleClick(int x, int y) {
         switch (state) {
@@ -183,6 +184,7 @@ public class GameModel {
     /** Thu tu uu tien (muc 6 cua design): nut UI/the > token > charger BOMB/UNSTABLE > o trong voi the dang chon. */
     private void clickPlaying(int x, int y) {
         if (Layout.PAUSE_BTN.contains(x, y)) { togglePause(); return; }
+        if (Layout.DIG_BTN.contains(x, y)) { digging = !digging; selected = null; return; }
 
         for (int i = 0; i < cards.size(); i++) {
             int cx = Constants.CARD_X + i * Constants.CARD_STEP;
@@ -203,6 +205,7 @@ public class GameModel {
         }
         int[] t = tileAt(x, y);
         if (t == null) return;
+        if (digging) { dig(t[0], t[1]); return; }
         if (grid[t[0]][t[1]] instanceof BrokenCharger bc && bc.canDetonateByClick()) {
             bc.detonateByClick(this);
             return;
@@ -211,8 +214,20 @@ public class GameModel {
     }
 
     private void clickCard(UnitType type) {
+        digging = false;
         if (selected == type) { selected = null; return; }   // bam lai the dang chon = huy
         if (cooldown.get(type) == 0 && credits >= type.cost) selected = type;
+    }
+
+    /** Con gian keo quan di: khong hoan tien, Charger bi go thi khong no. Che do gian van bat de go tiep. */
+    public boolean dig(int row, int col) {
+        Defender d = grid[row][col];
+        if (d == null || d.isDead()) return false;
+        d.remove();
+        grid[row][col] = null;
+        floatText("The cockroach took it.", Constants.GRID_X + col * Constants.TILE + Constants.TILE / 2,
+                Constants.GRID_Y + row * Constants.TILE + 8);
+        return true;
     }
 
     public boolean canPlace(UnitType type, int row, int col) {
@@ -440,6 +455,7 @@ public class GameModel {
         if (state == GameState.LOST) return "You have been marked absent. See you next semester.";
         if (state == GameState.ENDING) return "Thanks for playing!";
         if (config == null) return "";
+        if (digging) return "Click a student to let the cockroach drag him away (no refund). Esc to cancel.";
         if (messageTicks > 0) return message;
         for (Tip t : config.tips())
             if (spawnClock >= t.startTick() && spawnClock < t.startTick() + t.durationTicks()) return t.text();
@@ -483,12 +499,13 @@ public class GameModel {
 
         double wave = spawns.isEmpty() ? 0
                 : Math.min(1.0, spawnClock / (double) Math.max(1, spawns.get(spawns.size() - 1).tick()));
-        boolean valid = selected != null && hoverRow >= 0 && canPlace(selected, hoverRow, hoverCol);
+        boolean valid = digging ? hoverRow >= 0 && grid[hoverRow][hoverCol] != null
+                : selected != null && hoverRow >= 0 && canPlace(selected, hoverRow, hoverCol);
         double bannerAlpha = bannerTicks <= 0 ? 0 : Math.min(1.0, bannerTicks / 20.0);
         String bossLabel = boss == null ? "" : "Prof. Deadline - " + boss.phase().label;
         double bossHealth = boss == null ? 0 : boss.health() / boss.type().health;
 
-        return new RenderSnapshot(state, tick, mouseX, mouseY, hoverRow, hoverCol, valid, credits, selected,
+        return new RenderSnapshot(state, tick, mouseX, mouseY, hoverRow, hoverCol, valid, credits, selected, digging,
                 currentMessage(), wave, bannerText, bannerAlpha, errorMessage, unlocked, bossLabel, bossHealth,
                 List.copyOf(rows), List.copyOf(cv), List.copyOf(dv), List.copyOf(ev), List.copyOf(pv),
                 List.copyOf(tv), List.copyOf(fv), List.copyOf(xv));
@@ -516,6 +533,7 @@ public class GameModel {
     public int unlocked() { return unlocked; }
     public String error() { return errorMessage; }
     public UnitType selected() { return selected; }
+    public boolean digging() { return digging; }
     public int enemyCount() { return aliveEnemies(); }
     public Boss boss() { return boss; }
 }

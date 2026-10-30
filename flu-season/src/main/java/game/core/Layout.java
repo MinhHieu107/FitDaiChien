@@ -9,6 +9,8 @@ public final class Layout {
     }
 
     public static final Rect PAUSE_BTN = new Rect(800, 10, 90, 40);
+    /** Nut con gian (go quan): cot trong ben trai luoi. */
+    public static final Rect DIG_BTN = new Rect(10, 110, 70, 76);
 
     public static final Rect MENU_PLAY = new Rect(350, 340, 200, 50);
     public static final Rect MENU_QUIT = new Rect(350, 405, 200, 50);
