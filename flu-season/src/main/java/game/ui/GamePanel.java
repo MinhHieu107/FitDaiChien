@@ -46,6 +46,7 @@ public class GamePanel extends JPanel {
                 drawBottomBar(g, s);
                 drawBanner(g, s);
                 drawOverlay(g, s);
+                if (s.state() == GameState.PLAYING) drawDigCursor(g, s);
             }
         }
     }
@@ -81,6 +82,7 @@ public class GamePanel extends JPanel {
         g.drawString(String.valueOf(s.credits()), Constants.CREDITS_X + 48, Constants.CREDITS_Y + 28);
 
         drawButton(g, s, Layout.PAUSE_BTN, "Pause", s.state() == GameState.PLAYING);
+        drawDigButton(g, s);
     }
 
     // ---------------- Luoi ----------------
@@ -98,9 +100,41 @@ public class GamePanel extends JPanel {
     }
 
     private void drawHover(Graphics2D g, RenderSnapshot s) {
-        if (s.selected() == null || s.hoverRow() < 0) return;
-        String f = s.hoverValid() ? "tile_placement_valid.png" : "tile_placement_invalid.png";
+        if (s.hoverRow() < 0) return;
+        String f;
+        if (s.digging()) {
+            if (!s.hoverValid()) return;                          // o trong: khong co gi de go
+            f = "tile_placement_invalid.png";                     // o do = quan se bi go
+        } else if (s.selected() != null) {
+            f = s.hoverValid() ? "tile_placement_valid.png" : "tile_placement_invalid.png";
+        } else return;
         g.drawImage(Assets.get(f), tileX(s.hoverCol()), tileY(s.hoverRow()), Constants.TILE, Constants.TILE, null);
+    }
+
+    // ---------------- Nut con gian ----------------
+
+    private void drawDigButton(Graphics2D g, RenderSnapshot s) {
+        Layout.Rect r = Layout.DIG_BTN;
+        boolean on = s.digging(), hover = r.contains(s.mouseX(), s.mouseY());
+        g.setColor(on ? new Color(150, 90, 50) : hover ? new Color(110, 150, 120) : new Color(70, 110, 85));
+        g.fillRoundRect(r.x(), r.y(), r.w(), r.h(), 14, 14);
+        g.setColor(on ? new Color(255, 210, 150) : new Color(200, 230, 205));
+        g.drawRoundRect(r.x(), r.y(), r.w(), r.h(), 14, 14);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.drawImage(Assets.get("conGian.png"), r.x() + (r.w() - 50) / 2, r.y() + 4, 50, 50, null);   // 800/50 = 16: dung luoi pixel
+        g.setColor(Color.WHITE);
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
+        String label = on ? "Cancel" : "Remove";
+        g.drawString(label, r.x() + (r.w() - g.getFontMetrics().stringWidth(label)) / 2, r.y() + r.h() - 7);
+    }
+
+    /** Con gian di theo chuot khi dang o che do go quan. */
+    private void drawDigCursor(Graphics2D g, RenderSnapshot s) {
+        if (!s.digging() || s.mouseX() < 0) return;
+        g.setComposite(AlphaComposite.SrcOver.derive(0.85f));
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.drawImage(Assets.get("conGian.png"), s.mouseX() + 6, s.mouseY() + 6, 50, 50, null);
+        g.setComposite(AlphaComposite.SrcOver);
     }
 
     // ---------------- Defender ----------------
