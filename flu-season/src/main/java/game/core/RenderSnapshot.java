@@ -11,7 +11,7 @@ import java.util.List;
 public record RenderSnapshot(
         GameState state, long tick, int mouseX, int mouseY,
         int hoverRow, int hoverCol, boolean hoverValid,
-        int credits, UnitType selected, String message, double waveProgress,
+        int credits, UnitType selected, boolean digging, String message, double waveProgress,
         String banner, double bannerAlpha, String error, int unlocked,
         String bossLabel, double bossHealth,
         List<Boolean> activeRows,
@@ -32,7 +32,7 @@ public record RenderSnapshot(
     public record EffectView(Effect.Kind kind, int row, int col, int age, int total) {}
 
     public static RenderSnapshot empty() {
-        return new RenderSnapshot(GameState.MENU, 0, -1, -1, -1, -1, false, 0, null, "", 0,
+        return new RenderSnapshot(GameState.MENU, 0, -1, -1, -1, -1, false, 0, null, false, "", 0,
                 "", 0, "", 0, "", 0, List.of(true, true, true, true, true),
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
     }
