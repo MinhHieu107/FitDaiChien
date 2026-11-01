@@ -22,7 +22,7 @@ public record RenderSnapshot(
     public record CardView(UnitType type, int cooldownLeft, boolean affordable) {}
     public record DefenderView(UnitType type, int row, int col, int health, int actionAge,
                                int visualRow, int visualFrame, boolean stunned) {}
-    public record EnemyView(EnemyType type, int row, double x, int health, boolean biting, int age,
+    public record EnemyView(EnemyType type, int row, double rowF, double x, int health, boolean biting, int age,
                             boolean flash, double alpha,
                             boolean boss, int phase, BossAction action, int actionAge) {}
     public record ProjectileView(Projectile.Kind kind, int row, double px) {}

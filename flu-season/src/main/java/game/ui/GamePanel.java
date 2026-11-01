@@ -200,7 +200,7 @@ public class GamePanel extends JPanel {
         final int w = 96, h = 112;
         int cx = (int) (Constants.GRID_X + (e.x() + 0.5) * Constants.TILE);
         int x = cx - w / 2;
-        int y = tileY(e.row()) + 76 - h;                       // chan boss ngang chan cac nhan vat khac
+        int y = (int) (Constants.GRID_Y + e.rowF() * Constants.TILE) + 76 - h;                       // chan boss ngang chan cac nhan vat khac
         Tint tint = e.flash() ? Tint.WHITE : Tint.NONE;
         BossAction a = e.action();
 

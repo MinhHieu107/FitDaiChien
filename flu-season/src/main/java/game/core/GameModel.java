@@ -476,7 +476,7 @@ public class GameModel {
 
         List<EnemyView> ev = new ArrayList<>();
         for (Enemy e : enemies)
-            ev.add(new EnemyView(e.type(), e.row(), e.x(), (int) Math.ceil(e.health()), e.isBiting(), e.age(),
+            ev.add(new EnemyView(e.type(), e.row(), e.visualRow(), e.x(), (int) Math.ceil(e.health()), e.isBiting(), e.age(),
                     e.isFlashing(), e.alpha(), e.isBoss(), e.phaseIndex(), e.bossAction(), e.bossActionAge()));
 
         List<ProjectileView> pv = new ArrayList<>();
@@ -532,6 +532,7 @@ public class GameModel {
     public GameState state() { return state; }
     public int unlocked() { return unlocked; }
     public String error() { return errorMessage; }
+    public boolean rowActive(int row) { return row >= 0 && row < activeRows.length && activeRows[row]; }
     public UnitType selected() { return selected; }
     public boolean digging() { return digging; }
     public int enemyCount() { return aliveEnemies(); }
