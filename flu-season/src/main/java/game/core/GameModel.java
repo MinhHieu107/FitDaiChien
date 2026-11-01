@@ -23,12 +23,7 @@ public class GameModel {
         PLACE_LINES.put(UnitType.WEABOO,  "This is just like episode 12!");
         PLACE_LINES.put(UnitType.CHARGER, "Only works if you hold the cable at an angle.");
     }
-    private static final String[] TUTORIAL_TEXT = {
-            "Welcome to class! Click the PC card, then click a tile to place it.",
-            "PCs make credits. Click the credit icon when it appears.",
-            "Place a Year 1 student in a row. They throw paper at sick students in that row.",
-            "Here they come! Don't let anyone reach the left edge."
-    };
+    private static final int TUTORIAL_STEPS = 4;
     private static final int BANNER_TICKS = 2 * Constants.TPS;
     private static final int FLOAT_TICKS = 45;               // chu bay len trong 1.5 s
     private static final int QUIZ_TARGETS = 3, QUIZ_STUN_TICKS = 3 * Constants.TPS;
@@ -156,8 +151,10 @@ public class GameModel {
         switch (state) {
             case MENU -> {
                 if (Layout.MENU_PLAY.contains(x, y)) { errorMessage = ""; state = GameState.STAGE_SELECT; }
+                else if (Layout.MENU_HELP.contains(x, y)) state = GameState.HELP;
                 else if (Layout.MENU_QUIT.contains(x, y)) quitHandler.run();
             }
+            case HELP -> { if (Layout.HELP_BACK.contains(x, y)) state = GameState.MENU; }
             case STAGE_SELECT -> {
                 for (int i = 0; i <= LAST_STAGE; i++)
                     if (i <= unlocked && Layout.stageButton(i).contains(x, y)) { startStage(i); return; }
@@ -456,10 +453,49 @@ public class GameModel {
         if (state == GameState.ENDING) return "Thanks for playing!";
         if (config == null) return "";
         if (digging) return "Click a student to let the cockroach drag him away (no refund). Esc to cancel.";
+        if (config.tutorial() && tutorialStep() < TUTORIAL_STEPS) return tutorialText();   // buoc 1-3: luon hien huong dan
         if (messageTicks > 0) return message;
         for (Tip t : config.tips())
             if (spawnClock >= t.startTick() && spawnClock < t.startTick() + t.durationTicks()) return t.text();
-        return config.tutorial() ? TUTORIAL_TEXT[tutorialStep() - 1] : "";
+        return config.tutorial() ? tutorialText() : "";
+    }
+
+    /** Chu huong dan cua tutorial, doi theo viec nguoi choi da chon the / co token / du tien hay chua. */
+    private String tutorialText() {
+        switch (tutorialStep()) {
+            case 1:
+                return selected == UnitType.PC
+                        ? "Now click any glowing tile to place your PC."
+                        : "Welcome to class! First, click the PC card at the top left. PCs produce credits.";
+            case 2:
+                return tokens.isEmpty()
+                        ? "Good! Your PC is working. Wait a few seconds for a credit coin to pop out of it..."
+                        : "A coin appeared! Click it to collect +25 credits.";
+            case 3:
+                if (selected == UnitType.YEAR1)
+                    return "Click a glowing tile. A Year 1 throws paper at sick students walking in his row.";
+                return credits >= UnitType.YEAR1.cost
+                        ? "Now click the Year 1 card (100 credits) to get a shooter."
+                        : "Not enough credits for Year 1 (100) yet. Keep collecting coins from your PC!";
+            default:
+                return spawnClock < 10 * Constants.TPS
+                        ? "Here they come! Sick students walk left. Don't let anyone reach the left edge."
+                        : "Tips: shooters only hit their own row. Esc cancels a card, P pauses, "
+                        + "and the cockroach button (left) removes a student.";
+        }
+    }
+
+    private RenderSnapshot.TutorialTarget tutorialTarget() {
+        if (config == null || !config.tutorial()) return RenderSnapshot.TutorialTarget.NONE;
+        switch (tutorialStep()) {
+            case 1: return selected == UnitType.PC ? RenderSnapshot.TutorialTarget.TILES : RenderSnapshot.TutorialTarget.CARD_PC;
+            case 2: return tokens.isEmpty() ? RenderSnapshot.TutorialTarget.NONE : RenderSnapshot.TutorialTarget.TOKEN;
+            case 3:
+                if (selected == UnitType.YEAR1) return RenderSnapshot.TutorialTarget.TILES;
+                return credits >= UnitType.YEAR1.cost && cooldown.get(UnitType.YEAR1) == 0
+                        ? RenderSnapshot.TutorialTarget.CARD_YEAR1 : RenderSnapshot.TutorialTarget.NONE;
+            default: return RenderSnapshot.TutorialTarget.NONE;
+        }
     }
 
     // ======================= Snapshot =======================
@@ -508,7 +544,8 @@ public class GameModel {
         return new RenderSnapshot(state, tick, mouseX, mouseY, hoverRow, hoverCol, valid, credits, selected, digging,
                 currentMessage(), wave, bannerText, bannerAlpha, errorMessage, unlocked, bossLabel, bossHealth,
                 List.copyOf(rows), List.copyOf(cv), List.copyOf(dv), List.copyOf(ev), List.copyOf(pv),
-                List.copyOf(tv), List.copyOf(fv), List.copyOf(xv));
+                List.copyOf(tv), List.copyOf(fv), List.copyOf(xv),
+                config != null && config.tutorial() ? tutorialStep() : 0, tutorialTarget());
     }
 
     // ======================= Tien ich =======================
