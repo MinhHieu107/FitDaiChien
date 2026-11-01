@@ -17,7 +17,8 @@ public record RenderSnapshot(
         List<Boolean> activeRows,
         List<CardView> cards, List<DefenderView> defenders, List<EnemyView> enemies,
         List<ProjectileView> projectiles, List<TokenView> tokens,
-        List<FloatView> floats, List<EffectView> effects) {
+        List<FloatView> floats, List<EffectView> effects,
+        int tutorialStep, TutorialTarget tutorialTarget) {
 
     public record CardView(UnitType type, int cooldownLeft, boolean affordable) {}
     public record DefenderView(UnitType type, int row, int col, int health, int actionAge,
@@ -29,11 +30,12 @@ public record RenderSnapshot(
     public record TokenView(int x, int y, int ticksLeft) {}
     /** Chu bay len roi mo dan: (x, y) la toa do pixel da tinh san vi tri hien tai. */
     public record FloatView(String text, int x, int y, double alpha) {}
+    public enum TutorialTarget { NONE, CARD_PC, CARD_YEAR1, TILES, TOKEN }
     public record EffectView(Effect.Kind kind, int row, int col, int age, int total) {}
 
     public static RenderSnapshot empty() {
         return new RenderSnapshot(GameState.MENU, 0, -1, -1, -1, -1, false, 0, null, false, "", 0,
                 "", 0, "", 0, "", 0, List.of(true, true, true, true, true),
-                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), 0, TutorialTarget.NONE);
     }
 }

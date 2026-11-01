@@ -33,6 +33,7 @@ public class GamePanel extends JPanel {
         switch (s.state()) {
             case MENU -> drawMenu(g, s);
             case STAGE_SELECT -> drawStageSelect(g, s);
+            case HELP -> drawHelp(g, s);
             default -> {                                  // PLAYING, PAUSED, WON, LOST, ENDING
                 drawTopBar(g, s);
                 drawGrid(g, s);
@@ -43,6 +44,7 @@ public class GamePanel extends JPanel {
                 drawProjectiles(g, s);
                 drawTokens(g, s);
                 drawFloats(g, s);
+                drawTutorialHints(g, s);
                 drawBottomBar(g, s);
                 drawBanner(g, s);
                 drawOverlay(g, s);
@@ -292,11 +294,28 @@ public class GamePanel extends JPanel {
     // ---------------- Bottom bar, banner, overlay ----------------
 
     private void drawBottomBar(Graphics2D g, RenderSnapshot s) {
-        g.setColor(new Color(20, 24, 30));
-        g.fillRoundRect(90, 510, 720, 44, 12, 12);
-        g.setColor(Color.WHITE);
-        g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
-        g.drawString(s.message(), 104, 538);
+        boolean guide = s.tutorialStep() > 0 && (s.state() == GameState.PLAYING || s.state() == GameState.PAUSED);
+        if (guide) {                                               // khung huong dan cua tutorial: to hon, co nhan "STEP n/4"
+            g.setColor(new Color(20, 24, 30));
+            g.fillRoundRect(90, 502, 720, 62, 12, 12);
+            g.setColor(new Color(255, 214, 64));
+            g.setStroke(new BasicStroke(2));
+            g.drawRoundRect(90, 502, 720, 62, 12, 12);
+            g.setStroke(new BasicStroke(1));
+            g.fillRoundRect(102, 513, 76, 24, 8, 8);
+            g.setColor(new Color(30, 24, 10));
+            g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
+            g.drawString("STEP " + s.tutorialStep() + "/4", 111, 530);
+            g.setColor(Color.WHITE);
+            g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 15));
+            drawWrapped(g, s.message(), 194, 525, 600, 20);
+        } else {
+            g.setColor(new Color(20, 24, 30));
+            g.fillRoundRect(90, 510, 720, 44, 12, 12);
+            g.setColor(Color.WHITE);
+            g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
+            g.drawString(s.message(), 104, 538);
+        }
 
         if (!s.bossLabel().isEmpty()) {                            // dang danh boss: thanh mau boss thay thanh wave
             int x = 200, y = 560, w = 500, h = 20;
@@ -378,6 +397,7 @@ public class GamePanel extends JPanel {
         drawCentered(g, "Your classmates are turning purple. Hold the lecture hall.", 296 + 38, f);
 
         drawButton(g, s, Layout.MENU_PLAY, "Play", true);
+        drawButton(g, s, Layout.MENU_HELP, "How to Play", true);
         drawButton(g, s, Layout.MENU_QUIT, "Quit", true);
 
         if (!s.error().isEmpty()) {                        // loi doc stage: hien o day thay vi crash
@@ -395,6 +415,142 @@ public class GamePanel extends JPanel {
             drawButton(g, s, Layout.stageButton(i), (i == 0 ? "Tutorial - " : "Stage " + i + " - ") + Stages.TITLES[i], open);
         }
         drawButton(g, s, Layout.SELECT_BACK, "Back", true);
+    }
+
+    // ---------------- Tutorial: danh dau cho can bam ----------------
+
+    private void drawTutorialHints(Graphics2D g, RenderSnapshot s) {
+        var target = s.tutorialTarget();
+        if (target == RenderSnapshot.TutorialTarget.NONE || s.state() != GameState.PLAYING) return;
+        double pulse = 0.5 + 0.5 * Math.sin(s.tick() * 0.2);
+        int bounce = (int) (6 * pulse);
+        Stroke oldStroke = g.getStroke();
+        Composite oldComp = g.getComposite();
+        switch (target) {
+            case CARD_PC, CARD_YEAR1 -> {
+                UnitType want = target == RenderSnapshot.TutorialTarget.CARD_PC ? UnitType.PC : UnitType.YEAR1;
+                for (int i = 0; i < s.cards().size(); i++) {
+                    if (s.cards().get(i).type() != want) continue;
+                    int x = Constants.CARD_X + i * Constants.CARD_STEP, y = Constants.CARD_Y;
+                    g.setStroke(new BasicStroke(4));
+                    g.setColor(new Color(255, 214, 64, (int) (140 + 115 * pulse)));
+                    g.drawRoundRect(x - 3, y - 3, Constants.CARD_W + 6, Constants.CARD_H + 6, 10, 10);
+                }
+            }
+            case TILES -> {
+                boolean[][] taken = new boolean[Constants.ROWS][Constants.COLS];
+                for (DefenderView d : s.defenders()) taken[d.row()][d.col()] = true;
+                g.setColor(new Color(255, 214, 64, (int) (45 + 70 * pulse)));
+                for (int r = 0; r < Constants.ROWS; r++) {
+                    if (!s.activeRows().get(r)) continue;
+                    for (int c = 0; c < Constants.COLS; c++)
+                        if (!taken[r][c]) g.fillRect(tileX(c), tileY(r), Constants.TILE, Constants.TILE);
+                }
+            }
+            case TOKEN -> {
+                for (TokenView t : s.tokens()) {
+                    g.setStroke(new BasicStroke(3));
+                    g.setColor(new Color(255, 214, 64, (int) (140 + 115 * pulse)));
+                    g.drawOval(t.x() - 5, t.y() - 5, Constants.TOKEN_SIZE + 10, Constants.TOKEN_SIZE + 10);
+                    drawArrow(g, t.x() + Constants.TOKEN_SIZE / 2, t.y() - 10 - bounce, false);
+                }
+            }
+            default -> { }
+        }
+        g.setStroke(oldStroke);
+        g.setComposite(oldComp);
+    }
+
+    /** Mui ten vang 18x14; pointUp = dinh huong len (chi vao vat o phia tren), nguoc lai huong xuong. */
+    private void drawArrow(Graphics2D g, int cx, int y, boolean pointUp) {
+        int[] xs = {cx, cx - 9, cx + 9};
+        int[] ys = pointUp ? new int[]{y, y + 14, y + 14} : new int[]{y, y - 14, y - 14};
+        g.setColor(new Color(255, 214, 64));
+        g.fillPolygon(xs, ys, 3);
+        g.setColor(new Color(60, 40, 0));
+        g.drawPolygon(xs, ys, 3);
+    }
+
+    // ---------------- Man How to Play ----------------
+
+    private void drawHelp(Graphics2D g, RenderSnapshot s) {
+        g.setColor(Color.WHITE);
+        drawCentered(g, "How to Play", 62, new Font(Font.SANS_SERIF, Font.BOLD, 38));
+
+        Font head = new Font(Font.SANS_SERIF, Font.BOLD, 17), body = new Font(Font.SANS_SERIF, Font.PLAIN, 14);
+        Color gold = new Color(255, 214, 64), text = new Color(215, 220, 228);
+        int x = 50, w = 390, y = 104;
+
+        String[][] left = {
+                {"Goal", "Sick students walk in from the right. If one reaches the left edge of the classroom, you are marked absent."},
+                {"Credits", "PCs make credit coins. Click a coin to collect it, then spend credits on student cards."},
+                {"Placing students", "Click a card, then click an empty tile. Cards have a cooldown. Esc cancels your selection, P pauses."},
+                {"Cockroach", "Click the cockroach button next to the grid, then click a student to remove him. No refund."},
+        };
+        for (String[] sec : left) {
+            g.setFont(head); g.setColor(gold);
+            g.drawString(sec[0], x, y);
+            if (sec[0].equals("Cockroach"))                         // icon canh tieu de
+                g.drawImage(Assets.get("conGian.png"), x + g.getFontMetrics().stringWidth(sec[0]) + 8, y - 16, 22, 22, null);
+            g.setFont(body); g.setColor(text);
+            y = drawWrapped(g, sec[1], x, y + 20, w, 18) + 8;
+        }
+
+        g.setFont(head); g.setColor(gold);
+        g.drawString("Enemies", x, y + 4);
+        String[] icons = {"sick_student.png", "sick_student_tissue.png", "sick_student_blanket.png", "prof_deadline.png"};
+        String[] enemyNames = {"Sick", "Tissue (fast)", "Blanket (tough)", "Prof (boss)"};
+        for (int i = 0; i < icons.length; i++) {
+            int ix = x + i * 98;
+            g.drawImage(Assets.get(icons[i]), ix + 20, y + 12, 44, 53, null);
+            g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12)); g.setColor(text);
+            g.drawString(enemyNames[i], ix + 6, y + 80);
+        }
+
+        // cot phai: danh sach quan
+        int rx = 480, ry = 104;
+        g.setFont(head); g.setColor(gold);
+        g.drawString("Your students", rx, ry);
+        UnitType[] order = {UnitType.PC, UnitType.YEAR1, UnitType.YEAR2, UnitType.YEAR3, UnitType.YEAR4,
+                UnitType.GAMER, UnitType.WEABOO, UnitType.CHARGER};
+        String[] names = {"PC", "Year 1", "Year 2", "Year 3", "Year 4", "Gamer", "Weaboo", "Broken Charger"};
+        String[] desc = {
+                "Produces credit coins. Click them!",
+                "Throws one paper ball at a time at enemies in his row.",
+                "Throws 2 paper balls per volley.",
+                "3 balls per volley, and fires faster.",
+                "4 balls, the fastest shooter. Double damage to the professor.",
+                "Tough wall: soaks up bites so your shooters survive.",
+                "Random attacks: plushies, smash, a pose, or a Wi-Fi beam.",
+                "Grows: mine (touch) -> bomb (click it: 3x3 blast) -> unstable (hurts your students too!)",
+        };
+        for (int i = 0; i < order.length; i++) {
+            UnitType t = order[i];
+            int cy = ry + 12 + i * 50;
+            Assets.drawFrame(g, Assets.get("unit_cards.png"), t.cardCol, t.cardRow, 144, 184, rx, cy, 36, 46);
+            g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14)); g.setColor(Color.WHITE);
+            g.drawString(names[i] + "  (" + t.cost + ")", rx + 46, cy + 14);
+            g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12)); g.setColor(text);
+            drawWrapped(g, desc[i], rx + 46, cy + 30, 330, 14);
+        }
+        drawButton(g, s, Layout.HELP_BACK, "Back", true);
+    }
+
+    /** Ngat dong theo do rong; tra ve toa do baseline cua dong KE TIEP. Dung font/mau dang chon. */
+    private int drawWrapped(Graphics2D g, String text, int x, int y, int maxW, int lineH) {
+        FontMetrics fm = g.getFontMetrics();
+        StringBuilder line = new StringBuilder();
+        for (String word : text.split(" ")) {
+            if (line.length() > 0 && fm.stringWidth(line + " " + word) > maxW) {
+                g.drawString(line.toString(), x, y);
+                y += lineH;
+                line.setLength(0);
+            }
+            if (line.length() > 0) line.append(' ');
+            line.append(word);
+        }
+        if (line.length() > 0) { g.drawString(line.toString(), x, y); y += lineH; }
+        return y;
     }
 
     // ---------------- Tien ich ve ----------------

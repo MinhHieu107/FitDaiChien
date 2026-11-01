@@ -12,8 +12,10 @@ public final class Layout {
     /** Nut con gian (go quan): cot trong ben trai luoi. */
     public static final Rect DIG_BTN = new Rect(10, 110, 70, 76);
 
-    public static final Rect MENU_PLAY = new Rect(350, 340, 200, 50);
-    public static final Rect MENU_QUIT = new Rect(350, 405, 200, 50);
+    public static final Rect MENU_PLAY = new Rect(350, 325, 200, 50);
+    public static final Rect MENU_HELP = new Rect(350, 389, 200, 50);
+    public static final Rect MENU_QUIT = new Rect(350, 453, 200, 50);
+    public static final Rect HELP_BACK = new Rect(350, 538, 200, 46);
 
     public static Rect stageButton(int i) { return new Rect(260, 150 + i * 72, 380, 56); }
     public static final Rect SELECT_BACK = new Rect(350, 470, 200, 46);
