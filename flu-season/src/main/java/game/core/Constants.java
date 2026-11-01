@@ -11,7 +11,7 @@ public final class Constants {
 
     // Top bar
     public static final int CARD_X = 10, CARD_Y = 5, CARD_W = 72, CARD_H = 90, CARD_STEP = 80;
-    public static final int CREDITS_X = 650, CREDITS_Y = 10, CREDITS_W = 130, CREDITS_H = 40;
+    public static final int CREDITS_X = 714, CREDITS_Y = 10, CREDITS_W = 100, CREDITS_H = 40;
 
     // Kinh te
     public static final int START_CREDITS = 150, MAX_CREDITS = 9999;

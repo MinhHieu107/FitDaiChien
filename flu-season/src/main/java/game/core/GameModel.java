@@ -55,6 +55,8 @@ public class GameModel {
     private List<UnitType> cards = List.of();
     private final Map<UnitType, Integer> cooldown = new EnumMap<>(UnitType.class);
     private UnitType selected;
+    private static final int BREACH_TICKS = 48;       // 1.6 s: may tinh no truoc khi hien man thua
+    private int breachTicks = -1;                  // -1 = chua co ke dich nao toi may tinh
     private boolean digging;                       // che do con gian: bam quan de go bo
 
     private final Defender[][] grid = new Defender[Constants.ROWS][Constants.COLS];
@@ -116,7 +118,7 @@ public class GameModel {
         tick = 0;
         credits = config.startCredits();
         for (UnitType t : UnitType.values()) cooldown.put(t, 0);
-        selected = null; digging = false;
+        selected = null; digging = false; breachTicks = -1;
         for (Defender[] r : grid) Arrays.fill(r, null);
         tokens.clear(); enemies.clear(); pendingEnemies.clear(); projectiles.clear();
         floats.clear(); effects.clear(); seenTypes.clear();
@@ -132,6 +134,7 @@ public class GameModel {
     }
 
     public void togglePause() {
+        if (breachTicks >= 0) return;
         if (state == GameState.PLAYING) state = GameState.PAUSED;
         else if (state == GameState.PAUSED) state = GameState.PLAYING;
     }
@@ -180,6 +183,7 @@ public class GameModel {
 
     /** Thu tu uu tien (muc 6 cua design): nut UI/the > token > charger BOMB/UNSTABLE > o trong voi the dang chon. */
     private void clickPlaying(int x, int y) {
+        if (breachTicks >= 0) return;                       // may tinh dang no: khong nhan lenh
         if (Layout.PAUSE_BTN.contains(x, y)) { togglePause(); return; }
         if (Layout.DIG_BTN.contains(x, y)) { digging = !digging; selected = null; return; }
 
@@ -330,6 +334,14 @@ public class GameModel {
 
     public void update() {
         if (state != GameState.PLAYING) return;
+        if (breachTicks >= 0) {                             // canh may tinh no: chi chay hieu ung roi thua
+            for (Effect e : effects) e.tick();
+            effects.removeIf(Effect::done);
+            for (FloatText f : floats) f.ticksLeft--;
+            floats.removeIf(f -> f.ticksLeft <= 0);
+            if (++breachTicks >= BREACH_TICKS) state = GameState.LOST;
+            return;
+        }
         tick++;
         if (messageTicks > 0) messageTicks--;
         if (bannerTicks > 0) bannerTicks--;
@@ -387,7 +399,14 @@ public class GameModel {
                 if (rowArr[c] != null && rowArr[c].isDead()) rowArr[c] = null;
 
         // 9. Thang / thua (thua uu tien hon)
-        for (Enemy e : enemies) if (!e.isDead() && e.x() <= 0.0) { state = GameState.LOST; return; }
+        for (Enemy e : enemies)
+            if (!e.isDead() && e.x() <= 0.0) {              // ke dich cham may tinh: no 1.6 s roi moi thua
+                breachTicks = 0;
+                digging = false; selected = null;
+                effects.clear();
+                addEffect(Effect.Kind.BREACH, e.row(), 0, BREACH_TICKS);
+                return;
+            }
         if (boss != null && boss.isDead() && !bossDefeated) startBossDefeat();
         if (bossDefeated) {
             if (++bossDefeatTicks >= DEFEAT_TICKS) winStage();
@@ -481,7 +500,7 @@ public class GameModel {
                 return spawnClock < 10 * Constants.TPS
                         ? "Here they come! Sick students walk left. Don't let anyone reach the left edge."
                         : "Tips: shooters only hit their own row. Esc cancels a card, P pauses, "
-                        + "and the cockroach button (left) removes a student.";
+                        + "and the cockroach button (next to your credits) removes a student.";
         }
     }
 

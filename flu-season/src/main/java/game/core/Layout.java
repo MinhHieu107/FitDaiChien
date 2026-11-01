@@ -8,9 +8,9 @@ public final class Layout {
         public boolean contains(int px, int py) { return px >= x && px < x + w && py >= y && py < y + h; }
     }
 
-    public static final Rect PAUSE_BTN = new Rect(800, 10, 90, 40);
-    /** Nut con gian (go quan): cot trong ben trai luoi. */
-    public static final Rect DIG_BTN = new Rect(10, 110, 70, 76);
+    public static final Rect PAUSE_BTN = new Rect(820, 10, 70, 40);
+    /** Nut con gian (go quan): ngay canh o tien tren thanh tren (8 the ket thuc o x=642). */
+    public static final Rect DIG_BTN = new Rect(646, 5, 62, 90);
 
     public static final Rect MENU_PLAY = new Rect(350, 325, 200, 50);
     public static final Rect MENU_HELP = new Rect(350, 389, 200, 50);
