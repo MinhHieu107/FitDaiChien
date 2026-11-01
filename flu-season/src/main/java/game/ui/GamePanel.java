@@ -3,6 +3,7 @@ package game.ui;
 import game.core.*;
 import game.core.RenderSnapshot.*;
 import game.entity.BossAction;
+import game.entity.Effect;
 import game.entity.UnitType;
 import game.stage.Stages;
 import javax.swing.*;
@@ -89,7 +90,25 @@ public class GamePanel extends JPanel {
 
     // ---------------- Luoi ----------------
 
+    /** May tinh (trai) va con duong (phai) bao quanh luoi. Ca hai la anh 90x240 gian ra 90x400 de khop 5 hang. */
+    private void drawSurroundings(Graphics2D g, RenderSnapshot s) {
+        int h = Constants.ROWS * Constants.TILE, roadX = Constants.GRID_X + Constants.COLS * Constants.TILE;
+        g.drawImage(Assets.get("supercomputer.png"), 0, Constants.GRID_Y, Constants.GRID_X, h, null);
+        g.drawImage(Assets.get("road.png"), roadX, Constants.GRID_Y, Constants.WIN_W - roadX, h, null);
+        for (int r = 0; r < Constants.ROWS; r++)               // lan khong dung duoc: toi di nhu o luoi
+            if (!s.activeRows().get(r)) {
+                g.setColor(new Color(30, 30, 34, 170));
+                g.fillRect(roadX, tileY(r), Constants.WIN_W - roadX, Constants.TILE);
+            }
+        for (EffectView e : s.effects())
+            if (e.kind() == Effect.Kind.BREACH) {              // may tinh bi tan cong: nhap nhay do
+                g.setColor(new Color(255, 50, 30, 50 + (int) (70 * (0.5 + 0.5 * Math.sin(e.age() * 0.8)))));
+                g.fillRect(0, Constants.GRID_Y, Constants.GRID_X, h);
+            }
+    }
+
     private void drawGrid(Graphics2D g, RenderSnapshot s) {
+        drawSurroundings(g, s);
         for (int r = 0; r < Constants.ROWS; r++)
             for (int c = 0; c < Constants.COLS; c++) {
                 String f = ((r + c) % 2 == 0) ? "tile_classroom.png" : "tile_classroom_alt.png";
@@ -123,11 +142,11 @@ public class GamePanel extends JPanel {
         g.setColor(on ? new Color(255, 210, 150) : new Color(200, 230, 205));
         g.drawRoundRect(r.x(), r.y(), r.w(), r.h(), 14, 14);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        g.drawImage(Assets.get("conGian.png"), r.x() + (r.w() - 50) / 2, r.y() + 4, 50, 50, null);   // 800/50 = 16: dung luoi pixel
+        g.drawImage(Assets.get("conGian.png"), r.x() + (r.w() - 50) / 2, r.y() + 10, 50, 50, null);  // 800/50 = 16: dung luoi pixel
         g.setColor(Color.WHITE);
         g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
         String label = on ? "Cancel" : "Remove";
-        g.drawString(label, r.x() + (r.w() - g.getFontMetrics().stringWidth(label)) / 2, r.y() + r.h() - 7);
+        g.drawString(label, r.x() + (r.w() - g.getFontMetrics().stringWidth(label)) / 2, r.y() + r.h() - 12);
     }
 
     /** Con gian di theo chuot khi dang o che do go quan. */
@@ -243,6 +262,12 @@ public class GamePanel extends JPanel {
         for (EffectView e : s.effects()) {
             double p = e.age() / (double) e.total();                  // 0 -> 1
             switch (e.kind()) {
+                case BREACH -> {
+                    int frame = Math.min(5, e.age() * 6 / e.total());          // 6 frame 64x64: tia lua -> no -> khoi
+                    int size = 144, cx = 52, cy = tileY(e.row()) + Constants.TILE / 2;
+                    Assets.drawFrame(g, Assets.get("computer_explosion_strip.png"), frame, 0, 64, 64,
+                            cx - size / 2, cy - size / 2, size, size);
+                }
                 case EXPLOSION -> {
                     // vung no 3x3: vong tron cam mo rong, mo dan
                     int cx = tileX(e.col()) + Constants.TILE / 2, cy = tileY(e.row()) + Constants.TILE / 2;
@@ -485,7 +510,7 @@ public class GamePanel extends JPanel {
                 {"Goal", "Sick students walk in from the right. If one reaches the left edge of the classroom, you are marked absent."},
                 {"Credits", "PCs make credit coins. Click a coin to collect it, then spend credits on student cards."},
                 {"Placing students", "Click a card, then click an empty tile. Cards have a cooldown. Esc cancels your selection, P pauses."},
-                {"Cockroach", "Click the cockroach button next to the grid, then click a student to remove him. No refund."},
+                {"Cockroach", "Click the cockroach button next to your credits, then click a student to remove him. No refund."},
         };
         for (String[] sec : left) {
             g.setFont(head); g.setColor(gold);

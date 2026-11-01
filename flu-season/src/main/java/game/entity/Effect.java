@@ -2,7 +2,7 @@ package game.entity;
 
 /** Hieu ung hinh anh ngan (vu no, tia beam). Khong gay sat thuong: sat thuong da tinh luc kich hoat. */
 public class Effect {
-    public enum Kind { EXPLOSION, BEAM }
+    public enum Kind { EXPLOSION, BEAM, BREACH }
 
     private final Kind kind;
     private final int row, col, total;
