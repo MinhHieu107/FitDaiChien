@@ -9,7 +9,7 @@ public class Enemy {
     public static final int FADE_TICKS = 10;          // mo dan khi chet
 
     private final EnemyType type;
-    private final int row;
+    private int row;
     private double x;
     private double health;
     private boolean biting = false;
@@ -36,6 +36,11 @@ public class Enemy {
         if (biting) blocker.takeDamage(bitePerSecond() / Constants.TPS);
         else x -= speedPerSecond(model) / Constants.TPS;
     }
+
+    /** Chi Boss dung: doi hang (logic va va cham chuyen ngay lap tuc). */
+    protected void setRow(int newRow) { row = newRow; }
+    /** Hang de ve (so thuc): boss truot muot khi doi hang. */
+    public double visualRow() { return row; }
 
     protected double speedPerSecond(GameModel model) { return type.speed * model.enemySpeedMultiplier(); }
     protected double bitePerSecond() { return type.bitePerSecond; }
