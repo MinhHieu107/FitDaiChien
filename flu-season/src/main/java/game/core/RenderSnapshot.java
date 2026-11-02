@@ -18,7 +18,7 @@ public record RenderSnapshot(
         List<CardView> cards, List<DefenderView> defenders, List<EnemyView> enemies,
         List<ProjectileView> projectiles, List<TokenView> tokens,
         List<FloatView> floats, List<EffectView> effects,
-        int tutorialStep, TutorialTarget tutorialTarget) {
+        int tutorialStep, TutorialTarget tutorialTarget, int introPage, int introTicks) {
 
     public record CardView(UnitType type, int cooldownLeft, boolean affordable) {}
     public record DefenderView(UnitType type, int row, int col, int health, int actionAge,
@@ -36,6 +36,6 @@ public record RenderSnapshot(
     public static RenderSnapshot empty() {
         return new RenderSnapshot(GameState.MENU, 0, -1, -1, -1, -1, false, 0, null, false, "", 0,
                 "", 0, "", 0, "", 0, List.of(true, true, true, true, true),
-                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), 0, TutorialTarget.NONE);
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), 0, TutorialTarget.NONE, 0, 0);
     }
 }

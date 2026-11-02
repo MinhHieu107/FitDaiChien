@@ -57,6 +57,7 @@ public class GameModel {
     private UnitType selected;
     private static final int BREACH_TICKS = 48;       // 1.6 s: may tinh no truoc khi hien man thua
     private int breachTicks = -1;                  // -1 = chua co ke dich nao toi may tinh
+    private int introPage, introTicks;           // man gioi thieu truoc stage 0
     private boolean digging;                       // che do con gian: bam quan de go bo
 
     private final Defender[][] grid = new Defender[Constants.ROWS][Constants.COLS];
@@ -148,7 +149,21 @@ public class GameModel {
         hoverCol = t == null ? -1 : t[1];
     }
 
-    public void cancelSelection() { selected = null; digging = false; }
+    public void cancelSelection() {
+        if (state == GameState.INTRO) { startStage(0); return; }          // Esc = bo qua loi gioi thieu
+        selected = null; digging = false;
+    }
+
+    private void startIntro() { introPage = 0; introTicks = 0; state = GameState.INTRO; }
+
+    /** Bam / Space / Enter: chu chua hien het -> hien het ngay; hien het roi -> sang trang; het trang -> vao stage 0. */
+    public void advanceIntro() {
+        if (state != GameState.INTRO) return;
+        if (!Intro.complete(introPage, introTicks)) { introTicks = Intro.ticksToComplete(introPage); return; }
+        if (introPage + 1 >= Intro.PAGES.length) { startStage(0); return; }
+        introPage++;
+        introTicks = 0;
+    }
 
     public void handleClick(int x, int y) {
         switch (state) {
@@ -157,10 +172,16 @@ public class GameModel {
                 else if (Layout.MENU_HELP.contains(x, y)) state = GameState.HELP;
                 else if (Layout.MENU_QUIT.contains(x, y)) quitHandler.run();
             }
+            case INTRO -> {
+                if (Layout.INTRO_SKIP.contains(x, y)) startStage(0); else advanceIntro();
+            }
             case HELP -> { if (Layout.HELP_BACK.contains(x, y)) state = GameState.MENU; }
             case STAGE_SELECT -> {
                 for (int i = 0; i <= LAST_STAGE; i++)
-                    if (i <= unlocked && Layout.stageButton(i).contains(x, y)) { startStage(i); return; }
+                    if (i <= unlocked && Layout.stageButton(i).contains(x, y)) {
+                        if (i == 0) startIntro(); else startStage(i);      // stage 0: xem loi gioi thieu truoc
+                        return;
+                    }
                 if (Layout.SELECT_BACK.contains(x, y)) state = GameState.MENU;
             }
             case PAUSED -> {
@@ -333,6 +354,7 @@ public class GameModel {
     // ======================= Moi tick =======================
 
     public void update() {
+        if (state == GameState.INTRO) { introTicks++; return; }
         if (state != GameState.PLAYING) return;
         if (breachTicks >= 0) {                             // canh may tinh no: chi chay hieu ung roi thua
             for (Effect e : effects) e.tick();
@@ -564,7 +586,8 @@ public class GameModel {
                 currentMessage(), wave, bannerText, bannerAlpha, errorMessage, unlocked, bossLabel, bossHealth,
                 List.copyOf(rows), List.copyOf(cv), List.copyOf(dv), List.copyOf(ev), List.copyOf(pv),
                 List.copyOf(tv), List.copyOf(fv), List.copyOf(xv),
-                config != null && config.tutorial() ? tutorialStep() : 0, tutorialTarget());
+                config != null && config.tutorial() ? tutorialStep() : 0, tutorialTarget(),
+                introPage, state == GameState.INTRO ? introTicks : 0);
     }
 
     // ======================= Tien ich =======================

@@ -26,6 +26,8 @@ public class InputHandler extends MouseAdapter {
     /** Esc = huy the dang chon, P = tam dung / tiep tuc. */
     public static void installKeys(JComponent c, GameLoop loop) {
         bind(c, KeyEvent.VK_ESCAPE, "cancel", () -> loop.submit(GameModel::cancelSelection));
+        bind(c, KeyEvent.VK_SPACE, "advance", () -> loop.submit(GameModel::advanceIntro));
+        bind(c, KeyEvent.VK_ENTER, "advanceEnter", () -> loop.submit(GameModel::advanceIntro));
         bind(c, KeyEvent.VK_P, "pause", () -> loop.submit(GameModel::togglePause));
     }
 
