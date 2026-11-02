@@ -15,6 +15,7 @@ public final class Layout {
     public static final Rect MENU_PLAY = new Rect(350, 325, 200, 50);
     public static final Rect MENU_HELP = new Rect(350, 389, 200, 50);
     public static final Rect MENU_QUIT = new Rect(350, 453, 200, 50);
+    public static final Rect INTRO_SKIP = new Rect(770, 556, 110, 32);
     public static final Rect HELP_BACK = new Rect(350, 538, 200, 46);
 
     public static Rect stageButton(int i) { return new Rect(260, 150 + i * 72, 380, 56); }

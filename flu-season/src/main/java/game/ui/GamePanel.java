@@ -35,6 +35,7 @@ public class GamePanel extends JPanel {
             case MENU -> drawMenu(g, s);
             case STAGE_SELECT -> drawStageSelect(g, s);
             case HELP -> drawHelp(g, s);
+            case INTRO -> drawIntro(g, s);
             default -> {                                  // PLAYING, PAUSED, WON, LOST, ENDING
                 drawTopBar(g, s);
                 drawGrid(g, s);
@@ -494,6 +495,97 @@ public class GamePanel extends JPanel {
         g.fillPolygon(xs, ys, 3);
         g.setColor(new Color(60, 40, 0));
         g.drawPolygon(xs, ys, 3);
+    }
+
+    // ---------------- Man gioi thieu (truoc stage 0) ----------------
+
+    private void drawIntro(Graphics2D g, RenderSnapshot s) {
+        g.setColor(new Color(8, 10, 16));
+        g.fillRect(0, 0, Constants.WIN_W, Constants.WIN_H);
+        int page = s.introPage(), ticks = s.introTicks();
+        float fade = Math.min(1f, ticks / 24f);                           // moi trang hien dan tu den
+        Composite old = g.getComposite();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+
+        g.setComposite(AlphaComposite.SrcOver.derive(fade));
+        drawIntroArt(g, page, ticks);
+        g.setComposite(old);
+
+        // chu: ngat dong tren ca doan, chi ve phan da "danh" -> dong khong bi nhay khi chu hien them
+        String full = Intro.PAGES[page];
+        boolean quote = page == 1;
+        Font font = new Font(Font.SERIF, quote ? Font.ITALIC : Font.PLAIN, 24);
+        g.setFont(font);
+        g.setColor(new Color(235, 232, 220));
+        FontMetrics fm = g.getFontMetrics();
+        java.util.List<String> lines = wrapLines(full, fm, 700);
+        int remaining = Intro.visibleChars(page, ticks);
+        int y = 350 + (lines.size() <= 2 ? 20 : 0);
+        for (String line : lines) {
+            if (remaining <= 0) break;
+            String shown = line.substring(0, Math.min(line.length(), remaining));
+            g.drawString(shown, (Constants.WIN_W - fm.stringWidth(line)) / 2, y);   // can giua theo dong day du
+            remaining -= line.length() + 1;
+            y += 34;
+        }
+
+        if (Intro.complete(page, ticks) && (ticks / 20) % 2 == 0) {
+            g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
+            g.setColor(new Color(150, 156, 170));
+            String hint = page == Intro.PAGES.length - 1 ? "Click or press Space to begin" : "Click or press Space to continue";
+            drawCentered(g, hint, 548, g.getFont());
+        }
+        for (int i = 0; i < Intro.PAGES.length; i++) {                      // cham tien do
+            g.setColor(i == page ? new Color(255, 214, 64) : new Color(70, 74, 86));
+            g.fillOval(Constants.WIN_W / 2 - Intro.PAGES.length * 9 + i * 18, 566, 10, 10);
+        }
+        drawButton(g, s, Layout.INTRO_SKIP, "Skip >>", true);
+    }
+
+    /** Hinh minh hoa moi trang (cung phong cach pixel nhu game). */
+    private void drawIntroArt(Graphics2D g, int page, int ticks) {
+        int bob = (int) (4 * Math.sin(ticks * 0.1));
+        switch (page) {
+            case 0 -> {                                                     // hoc ky yen binh: ca lop ngoi cung nhau
+                String[] row = {"year1_student", "pc", "gamer", "weaboo", "year2_student"};
+                for (int i = 0; i < row.length; i++)
+                    g.drawImage(Assets.get("placed/" + row[i] + "_placed.png"), 105 + i * 145, 110, 128, 154, null);
+                g.setColor(new Color(60, 66, 80));
+                g.fillRect(90, 268, 720, 3);
+            }
+            case 1 -> {                                                     // giao su Deadline
+                g.setColor(new Color(255, 214, 64, 40));
+                g.fillOval(330, 90, 240, 200);
+                g.drawImage(Assets.get("placed/prof_deadline_placed.png"), 354, 80 + bob, 192, 230, null);
+            }
+            case 2 -> {                                                     // hoang loan: sinh vien tim
+                g.setColor(new Color(220, 40, 40, 38));
+                g.fillRect(0, 70, Constants.WIN_W, 240);
+                String[] row = {"sick_student", "sick_student_tissue", "sick_student_blanket"};
+                for (int i = 0; i < row.length; i++)
+                    g.drawImage(Assets.get("placed/" + row[i] + "_placed.png"), 190 + i * 190, 100 + (i % 2 == 0 ? bob : -bob), 150, 180, null);
+            }
+            default -> {                                                    // nhiem vu: bao ve phong may chu bang doi hinh
+                g.drawImage(Assets.get("supercomputer.png"), 40, 85, 90, 215, null);
+                UnitType[] team = {UnitType.PC, UnitType.YEAR1, UnitType.YEAR2, UnitType.YEAR3,
+                        UnitType.YEAR4, UnitType.GAMER, UnitType.WEABOO, UnitType.CHARGER};
+                for (int i = 0; i < team.length; i++)
+                    Assets.drawFrame(g, Assets.get("unit_cards.png"), team[i].cardCol, team[i].cardRow, 144, 184,
+                            170 + i * 84, 150 + (i % 2 == 0 ? 0 : 20), 72, 90);
+            }
+        }
+    }
+
+    private java.util.List<String> wrapLines(String text, FontMetrics fm, int maxW) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        StringBuilder line = new StringBuilder();
+        for (String word : text.split(" ")) {
+            if (line.length() > 0 && fm.stringWidth(line + " " + word) > maxW) { out.add(line.toString()); line.setLength(0); }
+            if (line.length() > 0) line.append(' ');
+            line.append(word);
+        }
+        if (line.length() > 0) out.add(line.toString());
+        return out;
     }
 
     // ---------------- Man How to Play ----------------
