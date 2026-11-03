@@ -169,6 +169,11 @@ public class GamePanel extends JPanel {
             Tint tint = d.stunned() ? Tint.GREY : Tint.NONE;
             int w = Constants.SPRITE_W, h = Constants.SPRITE_H;
 
+            boolean idle = !(t == UnitType.PC && d.actionAge() < 12) && !(isStudent(t) && d.actionAge() < 12)
+                    && t != UnitType.CHARGER && !(t == UnitType.WEABOO && d.visualRow() >= 0)
+                    && !(t == UnitType.GAMER && d.health() * 2 < t.health);
+            if (!idle) g.drawImage(Assets.shadow("placed/" + t.sprite + ".png"), x, y, w, h, null);   // sheet hoat anh khong co bong
+
             if (t == UnitType.PC && d.actionAge() < 12) {                  // 12 tick, moi frame 3 tick
                 drawFrame(g, Assets.get("animation_sheets/pc_credit_pulse.png"), d.actionAge() / 3, 0, 160, 192, x, y, w, h, tint);
             } else if (isStudent(t) && d.actionAge() < 12) {               // dang ban: wind-up -> return
@@ -412,14 +417,14 @@ public class GamePanel extends JPanel {
 
     private void drawMenu(Graphics2D g, RenderSnapshot s) {
         g.setColor(Color.WHITE);
-        drawCentered(g, "Flu Season Defense", 130, new Font(Font.SANS_SERIF, Font.BOLD, 54));
+        drawCentered(g, "FIT Dai Chien", 130, new Font(Font.SANS_SERIF, Font.BOLD, 54));
 
         g.drawImage(Assets.get("placed/year1_student_placed.png"), 250, 150, 128, 144, null);
         g.drawImage(Assets.get("sick_student.png"), 522, 150, 128, 144, null);
 
         g.setColor(new Color(200, 205, 215));
         Font f = new Font(Font.SANS_SERIF, Font.ITALIC, 15);
-        drawCentered(g, "Flu season hit campus. Midterms hit harder.", 296 + 18, f);
+        drawCentered(g, "Deadline season hit campus. Midterms hit harder.", 296 + 18, f);
         drawCentered(g, "Your classmates are turning purple. Hold the lecture hall.", 296 + 38, f);
 
         drawButton(g, s, Layout.MENU_PLAY, "Play", true);
@@ -428,8 +433,8 @@ public class GamePanel extends JPanel {
 
         if (!s.error().isEmpty()) {                        // loi doc stage: hien o day thay vi crash
             g.setColor(new Color(255, 120, 110));
-            drawCentered(g, "Could not load stage:", 500, new Font(Font.SANS_SERIF, Font.BOLD, 15));
-            drawCentered(g, s.error(), 524, new Font(Font.SANS_SERIF, Font.PLAIN, 14));
+            drawCentered(g, "Could not load stage:", 566, new Font(Font.SANS_SERIF, Font.BOLD, 15));
+            drawCentered(g, s.error(), 588, new Font(Font.SANS_SERIF, Font.PLAIN, 14));
         }
     }
 

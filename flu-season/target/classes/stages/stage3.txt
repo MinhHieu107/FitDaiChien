@@ -1,7 +1,7 @@
 # Stage 3 - Finals: The Professor Arrives
 name=Finals: The Professor Arrives
 activeRows=1,2,3,4,5
-startCredits=250
+startCredits=300
 cards=PC,YEAR1,YEAR2,YEAR3,YEAR4,GAMER,WEABOO,CHARGER
 newCards=YEAR4
 tip=0,6,Year 4 deals double damage to the professor.

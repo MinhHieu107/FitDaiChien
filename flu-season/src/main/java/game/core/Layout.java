@@ -12,9 +12,10 @@ public final class Layout {
     /** Nut con gian (go quan): ngay canh o tien tren thanh tren (8 the ket thuc o x=642). */
     public static final Rect DIG_BTN = new Rect(646, 5, 62, 90);
 
-    public static final Rect MENU_PLAY = new Rect(350, 325, 200, 50);
-    public static final Rect MENU_HELP = new Rect(350, 389, 200, 50);
-    public static final Rect MENU_QUIT = new Rect(350, 453, 200, 50);
+    // Menu: tieu de ~130, hinh y=150..294, 2 dong gioi thieu ~314/334, nut bat dau tu 362 de khong de len chu
+    public static final Rect MENU_PLAY = new Rect(350, 362, 200, 50);
+    public static final Rect MENU_HELP = new Rect(350, 424, 200, 50);
+    public static final Rect MENU_QUIT = new Rect(350, 486, 200, 50);
     public static final Rect INTRO_SKIP = new Rect(770, 556, 110, 32);
     public static final Rect HELP_BACK = new Rect(350, 538, 200, 46);
 
