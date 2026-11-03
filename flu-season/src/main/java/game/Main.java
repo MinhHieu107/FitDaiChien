@@ -20,7 +20,7 @@ public class Main {
             panel.addMouseMotionListener(in);
             InputHandler.installKeys(panel, loop);
 
-            JFrame f = new JFrame("Flu Season Defense");
+            JFrame f = new JFrame("Fit Dai Chien");
             f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             f.setResizable(false);
             f.add(panel);

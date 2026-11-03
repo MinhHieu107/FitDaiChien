@@ -1,7 +1,7 @@
 # Stage 2 - Midterm: Is This On The Exam?
 name=Midterm: Is This On The Exam?
 activeRows=1,2,3,4,5
-startCredits=200
+startCredits=150
 cards=PC,YEAR1,YEAR2,YEAR3,GAMER,WEABOO,CHARGER
 newCards=YEAR3,WEABOO,CHARGER
 tip=0,6,The charger changes over time. Click it before it turns red!
