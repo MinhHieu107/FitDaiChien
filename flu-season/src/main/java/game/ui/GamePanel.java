@@ -5,6 +5,7 @@ import game.core.RenderSnapshot.*;
 import game.entity.BossAction;
 import game.entity.Effect;
 import game.entity.UnitType;
+import game.sound.VictorySound;
 import game.stage.Stages;
 import javax.swing.*;
 import java.awt.*;
@@ -15,11 +16,21 @@ public class GamePanel extends JPanel {
     private enum Tint { NONE, WHITE, GREY }
 
     private volatile RenderSnapshot snap = RenderSnapshot.empty();
+    private volatile GameState previousState = GameState.MENU;
 
     public GamePanel() { setPreferredSize(new Dimension(Constants.WIN_W, Constants.WIN_H)); }
 
     /** Goi tu game thread. repaint() an toan khi goi tu thread khac. */
-    public void publish(RenderSnapshot s) { snap = s; repaint(); }
+    public void publish(RenderSnapshot s) {
+        GameState old = previousState;
+        if ((s.state() == GameState.WON || s.state() == GameState.ENDING)
+                && old != GameState.WON && old != GameState.ENDING) {
+            VictorySound.play();
+        }
+        previousState = s.state();
+        snap = s;
+        repaint();
+    }
 
     @Override protected void paintComponent(Graphics g0) {
         super.paintComponent(g0);
@@ -391,26 +402,88 @@ public class GamePanel extends JPanel {
                 drawButton(g, s, Layout.SECONDARY, "Restart stage", true);
                 drawButton(g, s, Layout.TERTIARY, "Back to menu", true);
             }
-            case WON -> {
-                drawCentered(g, "Stage cleared!", 230, new Font(Font.SANS_SERIF, Font.BOLD, 44));
-                drawCentered(g, s.message(), 280, new Font(Font.SANS_SERIF, Font.PLAIN, 18));
-                drawButton(g, s, Layout.PRIMARY, "Next stage", true);
-                drawButton(g, s, Layout.SECONDARY, "Back to menu", true);
-            }
+            case WON -> drawVictoryOverlay(g, s, false);
             case LOST -> {
                 drawCentered(g, "Marked absent", 230, new Font(Font.SANS_SERIF, Font.BOLD, 44));
                 drawCentered(g, s.message(), 280, new Font(Font.SANS_SERIF, Font.PLAIN, 18));
                 drawButton(g, s, Layout.PRIMARY, "Retry", true);
                 drawButton(g, s, Layout.SECONDARY, "Back to menu", true);
             }
-            case ENDING -> {
-                drawCentered(g, "COURSE PASSED", 230, new Font(Font.SANS_SERIF, Font.BOLD, 48));
-                drawCentered(g, "...Fine. Everyone gets a B. Class dismissed.", 280, new Font(Font.SANS_SERIF, Font.PLAIN, 18));
-                drawCentered(g, s.message(), 306, new Font(Font.SANS_SERIF, Font.PLAIN, 16));
-                drawButton(g, s, Layout.PRIMARY, "Back to menu", true);
-            }
+            case ENDING -> drawVictoryOverlay(g, s, true);
             default -> { }
         }
+    }
+
+    /** Man chien thang: nen toi, glow, confetti va bang vinh danh. */
+    private void drawVictoryOverlay(Graphics2D g, RenderSnapshot s, boolean finalWin) {
+        int w = Constants.WIN_W, h = Constants.WIN_H;
+        g.setPaint(new GradientPaint(0, 0, new Color(8, 18, 42, 238), 0, h,
+                new Color(37, 19, 65, 242)));
+        g.fillRect(0, 0, w, h);
+
+        // Anh sang toa tu tam man hinh
+        for (int i = 5; i >= 0; i--) {
+            g.setColor(new Color(255, 207, 92, 8 + i * 2));
+            int rw = 280 + i * 75, rh = 210 + i * 65;
+            g.fillOval((w - rw) / 2, 35 - i * 18, rw, rh);
+        }
+
+        // Confetti dung tick cua game de animation on dinh, khong can timer rieng
+        Color[] confetti = { new Color(255, 213, 79), new Color(91, 224, 190),
+                new Color(255, 112, 140), new Color(128, 171, 255), Color.WHITE };
+        for (int i = 0; i < 72; i++) {
+            int x = Math.floorMod(i * 137 + (int) (s.tick() * (i % 3 + 1)), w);
+            int y = Math.floorMod(i * 71 + (int) (s.tick() * (i % 4 + 1)), h);
+            g.setColor(confetti[i % confetti.length]);
+            if (i % 3 == 0) g.fillOval(x, y, 5, 5);
+            else g.fillRoundRect(x, y, 5, 10, 3, 3);
+        }
+
+        // Huy hieu
+        int pulse = (int) (4 * Math.sin(s.tick() * 0.12));
+        g.setColor(new Color(255, 203, 70, 45));
+        g.fillOval(w / 2 - 62 - pulse, 38 - pulse, 124 + pulse * 2, 124 + pulse * 2);
+        g.setColor(new Color(255, 213, 92));
+        g.fillOval(w / 2 - 49, 49, 98, 98);
+        g.setColor(new Color(143, 83, 18));
+        g.setStroke(new BasicStroke(3f));
+        g.drawOval(w / 2 - 41, 57, 82, 82);
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 56));
+        g.setColor(new Color(105, 65, 20));
+        String star = "★";
+        g.drawString(star, w / 2 - g.getFontMetrics().stringWidth(star) / 2, 119);
+
+        // Bang vinh danh
+        int px = 145, py = 170, pw = 610, ph = 315;
+        g.setColor(new Color(0, 0, 0, 95));
+        g.fillRoundRect(px + 7, py + 10, pw, ph, 30, 30);
+        g.setPaint(new GradientPaint(px, py, new Color(36, 50, 83, 248), px, py + ph,
+                new Color(19, 29, 54, 248)));
+        g.fillRoundRect(px, py, pw, ph, 30, 30);
+        g.setColor(new Color(255, 213, 92, 210));
+        g.setStroke(new BasicStroke(2f));
+        g.drawRoundRect(px, py, pw, ph, 30, 30);
+
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, finalWin ? 37 : 39));
+        g.setColor(new Color(255, 218, 111));
+        drawCentered(g, finalWin ? "COURSE COMPLETED!" : "STAGE CLEARED!", 235, g.getFont());
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 19));
+        g.setColor(Color.WHITE);
+        drawCentered(g, finalWin ? "YOU SURVIVED THE WHOLE SEMESTER" : "VICTORY IS YOURS", 270, g.getFont());
+        g.setColor(new Color(209, 220, 244));
+        g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 15));
+        drawCentered(g, finalWin ? "The class is safe. Time to celebrate!" : s.message(), 298, g.getFont());
+
+        // Nut nam trong vi tri hit-test da co san trong Layout
+        if (finalWin) {
+            drawButton(g, s, Layout.PRIMARY, "Back to menu", true);
+        } else {
+            drawButton(g, s, Layout.PRIMARY, "Next stage  →", true);
+            drawButton(g, s, Layout.SECONDARY, "Back to menu", true);
+        }
+        g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
+        g.setColor(new Color(190, 204, 231));
+        drawCentered(g, "FIT Dai Chien  •  WELL PLAYED", 520, g.getFont());
     }
 
     // ---------------- Menu & chon stage ----------------
