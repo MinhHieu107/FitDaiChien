@@ -7,6 +7,7 @@ import game.stage.StageConfig.Banner;
 import game.stage.StageConfig.BossSpawn;
 import game.stage.StageConfig.Tip;
 import java.util.*;
+import java.util.function.Consumer;
 
 /** Toan bo luat choi. Khong co code Swing. Chi game thread duoc goi cac ham nay. */
 public class GameModel {
@@ -41,6 +42,7 @@ public class GameModel {
     private final ProgressStore store;
     private final Random rng;
     private Runnable quitHandler = () -> {};
+    private Consumer<String> soundHandler = ignored -> {};
     private GameState state = GameState.MENU;
     private int unlocked;                 // stage cao nhat da mo (0..3)
     private int currentStage;
@@ -95,6 +97,11 @@ public class GameModel {
     }
 
     public void setQuitHandler(Runnable r) { quitHandler = r; }
+
+    /** Gui su kien am thanh ma khong phu thuoc vao Swing/audio implementation. */
+    public void setSoundHandler(Consumer<String> handler) {
+        soundHandler = handler == null ? ignored -> {} : handler;
+    }
 
     // ======================= Dieu huong man hinh =======================
 
@@ -263,6 +270,7 @@ public class GameModel {
         credits -= type.cost;
         cooldown.put(type, type.cooldownTicks);
         grid[row][col] = d;
+        soundHandler.accept("unit_place");
         say(PLACE_LINES.get(type), 60);
         if (type == UnitType.PC) pcPlaced = true;
         if (type == UnitType.YEAR1) year1Placed = true;
@@ -289,7 +297,10 @@ public class GameModel {
         }
     }
 
-    public void addProjectile(Projectile p) { projectiles.add(p); }
+    public void addProjectile(Projectile p) {
+        projectiles.add(p);
+        if (p.kind().dir > 0) soundHandler.accept("attack");
+    }
     public void addEffect(Effect.Kind kind, int row, int col, int ticks) { effects.add(new Effect(kind, row, col, ticks)); }
     public void floatText(String text, int px, int py) { floats.add(new FloatText(text, px, py)); }
 
@@ -446,6 +457,7 @@ public class GameModel {
         }
         if (hit == null) return false;
         hit.takeDamage(hit.isBoss() ? p.bossDamage() : p.damage());
+        soundHandler.accept("enemy_hit");
         return true;
     }
 

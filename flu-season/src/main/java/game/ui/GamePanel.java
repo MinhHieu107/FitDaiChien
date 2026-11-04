@@ -5,7 +5,6 @@ import game.core.RenderSnapshot.*;
 import game.entity.BossAction;
 import game.entity.Effect;
 import game.entity.UnitType;
-import game.sound.VictorySound;
 import game.stage.Stages;
 import javax.swing.*;
 import java.awt.*;
@@ -23,10 +22,6 @@ public class GamePanel extends JPanel {
     /** Goi tu game thread. repaint() an toan khi goi tu thread khac. */
     public void publish(RenderSnapshot s) {
         GameState old = previousState;
-        if ((s.state() == GameState.WON || s.state() == GameState.ENDING)
-                && old != GameState.WON && old != GameState.ENDING) {
-            VictorySound.play();
-        }
         previousState = s.state();
         snap = s;
         repaint();
